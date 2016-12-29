@@ -50,9 +50,10 @@ public class MongoSchema extends AbstractSchema {
 
   @Override protected Map<String, Table> getTableMap() {
     final ImmutableMap.Builder<String, Table> builder = ImmutableMap.builder();
-    for (String collectionName : mongoDb.getCollectionNames()) {
-      builder.put(collectionName, new MongoTable(collectionName));
-    }
+//    for (String collectionName : mongoDb.getCollectionNames()) {
+//      builder.put(collectionName, new MongoTable(collectionName));
+//    }
+    builder.put("zips", new MongoTable("zips"));
     return builder.build();
   }
 }

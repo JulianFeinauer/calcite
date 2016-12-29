@@ -124,8 +124,16 @@ public class RelBuilder {
   private final RelFactories.TableScanFactory scanFactory;
   private final Deque<Frame> stack = new ArrayDeque<>();
 
+  public RelOptCluster getCluster() {
+    return cluster;
+  }
+
+  public RelOptSchema getRelOptSchema() {
+    return relOptSchema;
+  }
+
   protected RelBuilder(Context context, RelOptCluster cluster,
-      RelOptSchema relOptSchema) {
+                       RelOptSchema relOptSchema) {
     this.cluster = cluster;
     this.relOptSchema = relOptSchema;
     if (context == null) {

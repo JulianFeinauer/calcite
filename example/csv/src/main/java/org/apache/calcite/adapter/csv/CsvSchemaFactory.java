@@ -54,7 +54,7 @@ public class CsvSchemaFactory implements SchemaFactory {
     String flavorName = (String) operand.get("flavor");
     CsvTable.Flavor flavor;
     if (flavorName == null) {
-      flavor = CsvTable.Flavor.SCANNABLE;
+      flavor = CsvTable.Flavor.TRANSLATABLE;
     } else {
       flavor = CsvTable.Flavor.valueOf(flavorName.toUpperCase());
     }

@@ -16,6 +16,9 @@
  */
 package org.apache.calcite.adapter.csv;
 
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.impl.AbstractSchema;
 
@@ -36,7 +39,7 @@ public class CsvSchema extends AbstractSchema {
   /**
    * Creates a CSV schema.
    *
-   * @param directoryFile Directory that holds {@code .csv} files
+   * @param directoryFile Directory that holds {@code .csvTranslatableTable} files
    * @param flavor     Whether to instantiate flavor tables that undergo
    *                   query optimization
    */
@@ -64,7 +67,7 @@ public class CsvSchema extends AbstractSchema {
   }
 
   @Override protected Map<String, Table> getTableMap() {
-    // Look for files in the directory ending in ".csv", ".csv.gz", ".json",
+    // Look for files in the directory ending in ".csvTranslatableTable", ".csvTranslatableTable.gz", ".json",
     // ".json.gz".
     File[] files = directoryFile.listFiles(
         new FilenameFilter() {
@@ -101,10 +104,6 @@ public class CsvSchema extends AbstractSchema {
     switch (flavor) {
     case TRANSLATABLE:
       return new CsvTranslatableTable(file, null);
-    case SCANNABLE:
-      return new CsvScannableTable(file, null);
-    case FILTERABLE:
-      return new CsvFilterableTable(file, null);
     default:
       throw new AssertionError("Unknown flavor " + flavor);
     }

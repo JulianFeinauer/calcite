@@ -111,7 +111,9 @@ public abstract class RelOptRule {
     assignSolveOrder();
   }
 
-  //~ Methods for creating operands ------------------------------------------
+
+
+    //~ Methods for creating operands ------------------------------------------
 
   /**
    * Creates an operand that matches a relational expression that has no

@@ -42,7 +42,7 @@ import java.util.List;
  *
  * <p>Like any table scan, it serves as a leaf node of a query tree.</p>
  */
-public class CsvTableScan extends TableScan implements EnumerableRel {
+public class CsvTableScan extends TableScan implements CsvRel {
   final CsvTranslatableTable csvTable;
   final int[] fields;
 
@@ -53,6 +53,12 @@ public class CsvTableScan extends TableScan implements EnumerableRel {
     this.fields = fields;
 
     assert csvTable != null;
+  }
+
+  public CsvTableScan(RelOptCluster cluster, RelTraitSet relTraits, RelOptTable relOptTable, CsvTranslatableTable csvTranslatableTable) {
+    super(cluster, relTraits, relOptTable);
+    this.csvTable = csvTranslatableTable;
+    this.fields = null;
   }
 
   @Override public RelNode copy(RelTraitSet traitSet, List<RelNode> inputs) {
@@ -79,26 +85,10 @@ public class CsvTableScan extends TableScan implements EnumerableRel {
     planner.addRule(CsvProjectTableScanRule.INSTANCE);
   }
 
-  public Result implement(EnumerableRelImplementor implementor, Prefer pref) {
-    PhysType physType =
-        PhysTypeImpl.of(
-            implementor.getTypeFactory(),
-            getRowType(),
-            pref.preferArray());
-
-    if (table instanceof JsonTable) {
-      return implementor.result(
-          physType,
-          Blocks.toBlock(
-              Expressions.call(table.getExpression(JsonTable.class),
-                  "enumerable")));
-    }
-    return implementor.result(
-        physType,
-        Blocks.toBlock(
-            Expressions.call(table.getExpression(CsvTranslatableTable.class),
-                "project", implementor.getRootExpression(),
-                Expressions.constant(fields))));
+  @Override
+  public void implement(Implementor implementor) {
+    implementor.csvTranslatableTable = csvTable;
+    implementor.table = table;
   }
 }
 

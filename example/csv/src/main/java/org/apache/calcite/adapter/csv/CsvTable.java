@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.adapter.csv;
 
+import org.apache.calcite.adapter.java.AbstractQueryableTable;
 import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
@@ -29,13 +30,14 @@ import java.util.List;
 /**
  * Base class for table that reads CSV files.
  */
-public abstract class CsvTable extends AbstractTable {
+public abstract class CsvTable extends AbstractQueryableTable {
   protected final File file;
   protected final RelProtoDataType protoRowType;
   protected List<CsvFieldType> fieldTypes;
 
   /** Creates a CsvAbstractTable. */
   CsvTable(File file, RelProtoDataType protoRowType) {
+    super(Object[].class);
     this.file = file;
     this.protoRowType = protoRowType;
   }

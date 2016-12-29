@@ -17,29 +17,35 @@
 package org.apache.calcite.adapter.csv;
 
 import org.apache.calcite.DataContext;
+import org.apache.calcite.adapter.java.AbstractQueryableTable;
 import org.apache.calcite.linq4j.AbstractEnumerable;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.linq4j.QueryProvider;
 import org.apache.calcite.linq4j.Queryable;
 import org.apache.calcite.linq4j.tree.Expression;
+import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelProtoDataType;
 import org.apache.calcite.schema.QueryableTable;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.calcite.schema.Schemas;
 import org.apache.calcite.schema.TranslatableTable;
+import org.apache.calcite.schema.impl.AbstractTableQueryable;
 
 import java.io.File;
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Table based on a CSV file.
  */
-public class CsvTranslatableTable extends CsvTable
-    implements QueryableTable, TranslatableTable {
+public class CsvTranslatableTable extends CsvTable implements TranslatableTable {
   /** Creates a CsvTable. */
   CsvTranslatableTable(File file, RelProtoDataType protoRowType) {
     super(file, protoRowType);
@@ -76,14 +82,38 @@ public class CsvTranslatableTable extends CsvTable
     throw new UnsupportedOperationException();
   }
 
-  public RelNode toRel(
-      RelOptTable.ToRelContext context,
-      RelOptTable relOptTable) {
-    // Request all fields.
-    final int fieldCount = relOptTable.getRowType().getFieldCount();
-    final int[] fields = CsvEnumerator.identityList(fieldCount);
-    return new CsvTableScan(context.getCluster(), relOptTable, this, fields);
+  public RelNode toRel(RelOptTable.ToRelContext context, RelOptTable relOptTable) {
+    final RelOptCluster cluster = context.getCluster();
+    return new CsvTableScan(cluster, cluster.traitSetOf(CsvRel.CONVENTION),
+            relOptTable, this);
   }
+
+  @Override
+  public RelDataType getRowType(RelDataTypeFactory typeFactory) {
+    return null;
+  }
+
+  public static class CsvQueryable<T> extends AbstractTableQueryable<T> {
+
+    public CsvQueryable(QueryProvider queryProvider, SchemaPlus schema, CsvTranslatableTable table, String tableName) {
+      super(queryProvider, schema, table, tableName);
+    }
+
+    @Override
+    public Enumerator<T> enumerator() {
+      return null;
+    }
+
+    private CsvTranslatableTable getTable() {
+      return (CsvTranslatableTable)table;
+    }
+
+    @SuppressWarnings("UnusedDeclaration")
+    public Enumerable<Object> project(int[] fields) {
+      return null;
+    }
+  }
+
 }
 
 // End CsvTranslatableTable.java

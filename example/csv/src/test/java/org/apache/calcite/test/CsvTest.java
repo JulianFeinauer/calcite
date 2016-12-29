@@ -17,7 +17,6 @@
 package org.apache.calcite.test;
 
 import org.apache.calcite.adapter.csv.CsvSchemaFactory;
-import org.apache.calcite.adapter.csv.CsvStreamTableFactory;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.linq4j.function.Function1;
 import org.apache.calcite.schema.Schema;
@@ -62,6 +61,11 @@ import static org.junit.Assert.fail;
  * Unit test of the Calcite adapter for CSV.
  */
 public class CsvTest {
+
+  /** Connection factory based on the "zips-es" model. */
+  private static final ImmutableMap<String, String> CSV = ImmutableMap.of("model",
+          CsvTest.class.getResource("/smart.json").getPath());
+
   private void close(Connection connection, Statement statement) {
     if (statement != null) {
       try {
@@ -180,6 +184,21 @@ public class CsvTest {
 
   @Test public void testSelectSingleProject() throws SQLException {
     checkSql("smart", "select name from DEPTS");
+  }
+
+  @Test
+  public void testExplain() {
+    // hduser
+    // hadoop2k15 / 2k16
+    final String explain = "PLAN=ElasticsearchToEnumerableConverter\n"
+            + "  ElasticsearchSort(sort0=[$4], dir0=[ASC])\n"
+            + "    ElasticsearchProject(city=[CAST(ITEM($0, 'city')):VARCHAR(20) CHARACTER SET \"ISO-8859-1\" COLLATE \"ISO-8859-1$en_US$primary\"], longitude=[CAST(ITEM(ITEM($0, 'loc'), 0)):FLOAT], latitude=[CAST(ITEM(ITEM($0, 'loc'), 1)):FLOAT], pop=[CAST(ITEM($0, 'pop')):INTEGER], state=[CAST(ITEM($0, 'state')):VARCHAR(2) CHARACTER SET \"ISO-8859-1\" COLLATE \"ISO-8859-1$en_US$primary\"], id=[CAST(ITEM($0, 'id')):VARCHAR(5) CHARACTER SET \"ISO-8859-1\" COLLATE \"ISO-8859-1$en_US$primary\"])\n"
+            + "      ElasticsearchTableScan(table=[[elasticsearch_raw, zips]])";
+    CalciteAssert.that()
+            .enable(true)
+            .with(CSV)
+            .query("select name from EMPS where name = 'John'")
+            .explainContains(explain);
   }
 
   /** Test case for
@@ -549,80 +568,6 @@ public class CsvTest {
     }
   }
 
-  @Test(timeout = 10000) public void testCsvStream() throws Exception {
-    final File file = File.createTempFile("stream", "csv");
-    final String model = "{\n"
-        + "  version: '1.0',\n"
-        + "  defaultSchema: 'STREAM',\n"
-        + "  schemas: [\n"
-        + "    {\n"
-        + "      name: 'SS',\n"
-        + "      tables: [\n"
-        + "        {\n"
-        + "          name: 'DEPTS',\n"
-        + "          type: 'custom',\n"
-        + "          factory: '" + CsvStreamTableFactory.class.getName()
-        + "',\n"
-        + "          stream: {\n"
-        + "            stream: true\n"
-        + "          },\n"
-        + "          operand: {\n"
-        + "            file: " + escapeString(file.getAbsolutePath()) + ",\n"
-        + "            flavor: \"scannable\"\n"
-        + "          }\n"
-        + "        }\n"
-        + "      ]\n"
-        + "    }\n"
-        + "  ]\n"
-        + "}\n";
-    final String[] strings = {
-      "DEPTNO:int,NAME:string",
-      "10,\"Sales\"",
-      "20,\"Marketing\"",
-      "30,\"Engineering\""
-    };
-
-    try (final Connection connection =
-             DriverManager.getConnection("jdbc:calcite:model=inline:" + model);
-         final PrintWriter pw = new PrintWriter(new FileWriter(file));
-         final Worker<Void> worker = new Worker<>()) {
-      final Thread thread = new Thread(worker);
-      thread.start();
-
-      // Add some rows so that the table can deduce its row type.
-      final Iterator<String> lines = Arrays.asList(strings).iterator();
-      pw.println(lines.next()); // header
-      pw.flush();
-      worker.queue.put(writeLine(pw, lines.next())); // first row
-      worker.queue.put(writeLine(pw, lines.next())); // second row
-      final CalciteConnection calciteConnection =
-          connection.unwrap(CalciteConnection.class);
-      final String sql = "select stream * from \"SS\".\"DEPTS\"";
-      final PreparedStatement statement =
-          calciteConnection.prepareStatement(sql);
-      final ResultSet resultSet = statement.executeQuery();
-      int count = 0;
-      try {
-        while (resultSet.next()) {
-          ++count;
-          if (lines.hasNext()) {
-            worker.queue.put(sleep(10));
-            worker.queue.put(writeLine(pw, lines.next()));
-          } else {
-            worker.queue.put(cancel(statement));
-          }
-        }
-        fail("expected exception, got end of data");
-      } catch (SQLException e) {
-        assertThat(e.getMessage(), is("Statement canceled"));
-      }
-      assertThat(count, anyOf(is(strings.length - 2), is(strings.length - 1)));
-      assertThat(worker.e, nullValue());
-      assertThat(worker.v, nullValue());
-    } finally {
-      Util.discard(file.delete());
-    }
-  }
 
   /** Creates a command that appends a line to the CSV file. */
   private Callable<Void> writeLine(final PrintWriter pw, final String line) {
