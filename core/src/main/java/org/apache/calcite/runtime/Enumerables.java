@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -93,6 +95,9 @@ public class Enumerables {
           /** Current result row. Null if no row is ready. */
           TResult resultRow;
 
+          /** Match counter is 1 based in Oracle */
+          final AtomicInteger matchCounter = new AtomicInteger(1);
+
           public TResult current() {
             Objects.requireNonNull(resultRow);
             return resultRow;
@@ -117,7 +122,10 @@ public class Enumerables {
                   partitionStates.computeIfAbsent(key,
                       k -> matcher.createPartitionState());
               matcher.matchOne(e, partitionState,
-                  list -> emitter.emit(list, null, 0, emitRows::add));
+                  // TODO 26.12.18 jf: add row states (whatever this is?)
+                  list -> {
+                    emitter.emit(list, null, null, matchCounter.getAndIncrement(), emitRows::add);
+                  });
 /*
               recentRows.add(e);
               int earliestRetainedRow = Integer.MAX_VALUE;
@@ -193,7 +201,7 @@ public class Enumerables {
    * @param <E> element type
    * @param <TResult> result type */
   public interface Emitter<E, TResult> {
-    void emit(List<E> rows, List<Integer> rowStates, int match,
+    void emit(List<E> rows, List<Integer> rowStates, List<String> rowSymbols, int match,
         Consumer<TResult> consumer);
   }
 }
