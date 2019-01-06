@@ -4057,6 +4057,7 @@ public class JdbcTest {
 
   /** Tests for ROW_NUMBER */
   @Test public void testWinRowNumber() {
+    Hook.JAVA_PLAN.add((Consumer<String>)s -> System.out.println(s));
     CalciteAssert.hr()
         .query("select \"deptno\",\n"
             + " \"empid\",\n"

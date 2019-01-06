@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.linq4j;
 
+import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -31,6 +32,10 @@ import java.util.Iterator;
 public abstract class AbstractEnumerable<T> extends DefaultEnumerable<T> {
   public Iterator<T> iterator() {
     return Linq4j.enumeratorIterator(enumerator());
+  }
+
+  @Override public <C extends Collection<? super T>> C into(C sink) {
+    return super.into(sink);
   }
 }
 
