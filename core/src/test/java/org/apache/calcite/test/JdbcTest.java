@@ -3464,6 +3464,7 @@ public class JdbcTest {
 
   /** Tests windowed aggregation. */
   @Test public void testWinAgg() {
+    Hook.JAVA_PLAN.add((Consumer<? extends Object>) o -> System.out.println(o));
     CalciteAssert.hr()
         .query("select"
             + " \"deptno\",\n"
@@ -6820,7 +6821,7 @@ public class JdbcTest {
   }
 
   @Test public void testMatchSimple() {
-    Hook.JAVA_PLAN.add((Consumer<Object>) s -> System.out.println(s));
+    Hook.JAVA_PLAN.add((Consumer<?>)System.out::println);
     final String sql = "select *\n"
             + "from \"hr\".\"emps\" match_recognize (\n"
             + "  order by \"empid\" desc\n"
@@ -6851,10 +6852,11 @@ public class JdbcTest {
             .query(sql)
             .convertContains(convert)
             .explainContains(plan)
-            .returns("C=1000; EMPID=100");
+            .returns("C=1000; EMPID=100; TWO=2\nC=500; EMPID=200; TWO=2\n");
   }
 
   @Test public void testMatch() {
+    Hook.JAVA_PLAN.add((Consumer<Object>)o -> System.out.println(o));
     final String sql = "select *\n"
         + "from \"hr\".\"emps\" match_recognize (\n"
         + "  order by \"empid\" desc\n"
