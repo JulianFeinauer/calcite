@@ -1028,9 +1028,8 @@ public class RexImpTable {
       // v0 != null && v1 != null && f(v0, v1)
       for (Ord<RexNode> operand : Ord.zip(call.getOperands())) {
         if (translator.isNullable(operand.e)) {
-          list.add(
-              translator.translate(
-                  operand.e, NullAs.IS_NOT_NULL));
+          list.add(Expressions.notEqual(translator.translate(
+                  operand.e, NullAs.IS_NOT_NULL), Expressions.constant(null)));
           translator = translator.setNullable(operand.e, false);
         }
       }
