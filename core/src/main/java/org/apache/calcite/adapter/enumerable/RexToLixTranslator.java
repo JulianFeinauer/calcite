@@ -637,7 +637,7 @@ public class RexToLixTranslator {
     }
     switch (expr.getKind()) {
     case INPUT_REF:
-      {
+    {
       final int index = ((RexInputRef) expr).getIndex();
       Expression x = inputGetter.field(list, index, storageType);
 
@@ -645,7 +645,7 @@ public class RexToLixTranslator {
       return handleNullUnboxingIfNecessary(input, nullAs, storageType);
     }
     case PATTERN_INPUT_REF:
-      {
+    {
       final int index = ((RexInputRef) expr).getIndex();
       Expression x = inputGetter.field(list, index, storageType);
 
