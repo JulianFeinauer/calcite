@@ -7818,7 +7818,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     check("select count(ename, 1, deptno) from emp");
     check("select count(distinct ename, 1, deptno) from emp");
     checkFails("select count(deptno, *) from emp",
-        "(?s).*Encountered \", \\*\" at .*");
+        "(?s).*Encountered \"\\*\" at .*");
     checkFails(
         "select count(*, deptno) from emp",
         "(?s).*Encountered \",\" at .*");
@@ -10960,6 +10960,12 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     checkExpType("json_length('{\"foo\":\"bar\"}')", "INTEGER");
     checkExpType("json_length('{\"foo\":\"bar\"}', 'lax $')", "INTEGER");
     checkExpType("json_length('{\"foo\":\"bar\"}', 'strict $')", "INTEGER");
+  }
+
+  @Test public void testJsonKeys() {
+    checkExp("json_keys('{\"foo\":\"bar\"}', 'lax $')");
+    checkExpType("json_keys('{\"foo\":\"bar\"}', 'lax $')", "VARCHAR(2000) NOT NULL");
+    checkExpType("json_keys('{\"foo\":\"bar\"}', 'strict $')", "VARCHAR(2000) NOT NULL");
   }
 
   @Test public void testJsonObjectAgg() {

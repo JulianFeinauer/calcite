@@ -1440,19 +1440,21 @@ public class RelToSqlConverterTest {
         + "WHERE v2.job LIKE 'PRESIDENT'";
     final String expected = "SELECT \"DEPT\".\"DEPTNO\","
         + " \"EMP\".\"DEPTNO\" AS \"DEPTNO0\"\n"
-        + "FROM \"JDBC_SCOTT\".\"DEPT\"\n"
-        + "LEFT JOIN \"JDBC_SCOTT\".\"EMP\""
+        + "FROM \"SCOTT\".\"DEPT\"\n"
+        + "LEFT JOIN \"SCOTT\".\"EMP\""
         + " ON \"DEPT\".\"DEPTNO\" = \"EMP\".\"DEPTNO\"\n"
         + "WHERE \"EMP\".\"JOB\" LIKE 'PRESIDENT'";
-    final String expected2 = "SELECT DEPT.DEPTNO, EMP.DEPTNO AS DEPTNO0\n"
-        + "FROM JDBC_SCOTT.DEPT AS DEPT\n"
-        + "LEFT JOIN JDBC_SCOTT.EMP AS EMP ON DEPT.DEPTNO = EMP.DEPTNO\n"
+    // DB2 does not have implicit aliases, so generates explicit "AS DEPT"
+    // and "AS EMP"
+    final String expectedDb2 = "SELECT DEPT.DEPTNO, EMP.DEPTNO AS DEPTNO0\n"
+        + "FROM SCOTT.DEPT AS DEPT\n"
+        + "LEFT JOIN SCOTT.EMP AS EMP ON DEPT.DEPTNO = EMP.DEPTNO\n"
         + "WHERE EMP.JOB LIKE 'PRESIDENT'";
     sql(sql)
         .schema(CalciteAssert.SchemaSpec.JDBC_SCOTT)
         .ok(expected)
         .withDb2()
-        .ok(expected2);
+        .ok(expectedDb2);
   }
 
   /** Test case for
@@ -3127,7 +3129,7 @@ public class RelToSqlConverterTest {
   @Test public void testJsonPretty() {
     String query = "select json_pretty(\"product_name\") from \"product\"";
     final String expected = "SELECT JSON_PRETTY(\"product_name\" FORMAT JSON)\n"
-            + "FROM \"foodmart\".\"product\"";
+        + "FROM \"foodmart\".\"product\"";
     sql(query).ok(expected);
   }
 
@@ -3217,25 +3219,32 @@ public class RelToSqlConverterTest {
   @Test public void testJsonType() {
     String query = "select json_type(\"product_name\") from \"product\"";
     final String expected = "SELECT "
-            + "JSON_TYPE(\"product_name\" FORMAT JSON)\n"
-            + "FROM \"foodmart\".\"product\"";
+        + "JSON_TYPE(\"product_name\" FORMAT JSON)\n"
+        + "FROM \"foodmart\".\"product\"";
     sql(query).ok(expected);
   }
 
   @Test public void testJsonDepth() {
     String query = "select json_depth(\"product_name\") from \"product\"";
     final String expected = "SELECT "
-            + "JSON_DEPTH(\"product_name\" FORMAT JSON)\n"
-            + "FROM \"foodmart\".\"product\"";
+        + "JSON_DEPTH(\"product_name\" FORMAT JSON)\n"
+        + "FROM \"foodmart\".\"product\"";
     sql(query).ok(expected);
   }
 
   @Test public void testJsonLength() {
     String query = "select json_length(\"product_name\", 'lax $'), "
-            + "json_length(\"product_name\") from \"product\"";
+        + "json_length(\"product_name\") from \"product\"";
     final String expected = "SELECT JSON_LENGTH(\"product_name\" FORMAT JSON, 'lax $'), "
-            + "JSON_LENGTH(\"product_name\" FORMAT JSON)\n"
-            + "FROM \"foodmart\".\"product\"";
+        + "JSON_LENGTH(\"product_name\" FORMAT JSON)\n"
+        + "FROM \"foodmart\".\"product\"";
+    sql(query).ok(expected);
+  }
+
+  @Test public void testJsonKeys() {
+    String query = "select json_keys(\"product_name\", 'lax $') from \"product\"";
+    final String expected = "SELECT JSON_KEYS(\"product_name\" FORMAT JSON, 'lax $')\n"
+        + "FROM \"foodmart\".\"product\"";
     sql(query).ok(expected);
   }
 
@@ -3332,10 +3341,10 @@ public class RelToSqlConverterTest {
               .withDataTypeSystem(new RelDataTypeSystemImpl() {
                 @Override public int getMaxPrecision(SqlTypeName typeName) {
                   switch (typeName) {
-                    case VARCHAR:
-                      return 256;
-                    default:
-                      return super.getMaxPrecision(typeName);
+                  case VARCHAR:
+                    return 256;
+                  default:
+                    return super.getMaxPrecision(typeName);
                   }
                 }
               }));

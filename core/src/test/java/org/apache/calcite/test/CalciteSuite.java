@@ -177,6 +177,7 @@ import org.junit.runners.Suite;
     RexProgramFuzzyTest.class,
     SqlToRelConverterTest.class,
     ProfilerTest.class,
+    SqlStatisticProviderTest.class,
     SqlAdvisorJdbcTest.class,
     CoreQuidemTest.class,
     CalciteRemoteDriverTest.class,

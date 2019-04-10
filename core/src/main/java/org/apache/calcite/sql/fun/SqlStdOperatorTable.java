@@ -1309,6 +1309,8 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
   public static final SqlFunction JSON_VALUE =
       new SqlJsonValueFunction("JSON_VALUE", false);
 
+  public static final SqlFunction JSON_KEYS = new SqlJsonKeysFunction();
+
   public static final SqlFunction JSON_PRETTY =
           new SqlJsonPrettyFunction();
 
@@ -2152,6 +2154,20 @@ public class SqlStdOperatorTable extends ReflectiveSqlOperatorTable {
           ReturnTypes.TO_MULTISET,
           null,
           OperandTypes.ANY,
+          SqlFunctionCategory.SYSTEM, false, false,
+          Optionality.OPTIONAL) {
+      };
+
+  /**
+   * The LISTAGG operator. Multiset aggregator function.
+   */
+  public static final SqlAggFunction LISTAGG =
+      new SqlAggFunction("LISTAGG",
+          null,
+          SqlKind.LISTAGG,
+          ReturnTypes.ARG0_NULLABLE,
+          null,
+          OperandTypes.or(OperandTypes.STRING, OperandTypes.STRING_STRING),
           SqlFunctionCategory.SYSTEM, false, false,
           Optionality.OPTIONAL) {
       };
